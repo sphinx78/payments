@@ -4,9 +4,7 @@ A demo-ready Java web application for managing shared expenses within friend gro
 
 ## Academic Project
 
-This project serves as a comprehensive submission for both:
-- **DBMS Subject**: Complete SQL schema, views, triggers, transactions
-- **Java Subject**: Layered web application architecture
+This project serves as a comprehensive submission for academic project in Kathmandu University.
 
 ## Features
 
@@ -131,3 +129,4 @@ The application initializes with sample data:
 ## Author
 
 Academic Project for DBMS & Java Subjects
+
