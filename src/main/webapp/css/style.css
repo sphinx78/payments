@@ -73,26 +73,35 @@ header .container {
 }
 
 /* Navigation */
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--primary-color);
+    padding: 1rem;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
 nav ul {
     display: flex;
     list-style: none;
-    gap: 10px;
+    gap: 1rem;
 }
 
-nav a {
+nav ul li a {
+    color: var(--text-primary);
     text-decoration: none;
-    color: var(--text-secondary);
-    padding: 8px 16px;
-    border-radius: 999px;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    font-weight: 500;
-    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    transition: background-color 0.3s;
 }
 
-nav a:hover,
-nav a.active {
-    background: rgba(148, 163, 184, 0.18);
-    color: #e5e7eb;
+nav ul li a:hover, nav ul li a.active {
+    background-color: var(--accent-color);
+    color: white;
 }
 
 /* Main Content */
@@ -485,6 +494,73 @@ tr:hover {
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+/* Navigation Bar Styles */
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--primary-color);
+    padding: 1rem;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+    gap: 1rem;
+}
+
+nav ul li a {
+    color: var(--text-primary);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+nav ul li a:hover, nav ul li a.active {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+/* Tabbed Interface Styles */
+.tab-switch {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.tab-link {
+    padding: 0.5rem 1rem;
+    margin: 0 0.5rem;
+    border: none;
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.tab-link.active {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.tab-link:hover {
+    background-color: var(--primary-dark);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
 }
 
 /* Responsive */

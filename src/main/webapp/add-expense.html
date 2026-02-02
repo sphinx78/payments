@@ -546,6 +546,14 @@
                 showAlert('Error recording payment: ' + e.message, 'error');
             }
         }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-panel').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`#${tabName}Tab`).classList.add('active');
+
+            document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
+            document.querySelector(`#tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('active');
+        }
     </script>
 </body>
 
