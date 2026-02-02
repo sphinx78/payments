@@ -1,0 +1,44 @@
+# Walkthrough: Refactoring to String User IDs (Phone Numbers)
+
+This document outlines the changes made to the Expense Tracker application to transition from `Integer` based user IDs to [String](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/Group.java#93-101) based Phone Numbers.
+
+## Overview
+The primary goal was to use phone numbers as the unique identifier for users, enabling easier user management and integration. This required updates across all layers of the application.
+
+## Changes
+
+### 1. Model Layer
+- **[User](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/User.java#18-83)**: Changed primary key from `int userId` to `String phoneNumber`.
+- **References**: Updated foreign key fields in [Group](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/Group.java#18-102), [GroupMember](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/GroupMember.java#21-94), [Expense](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/Expense.java#23-143), [ExpenseParticipant](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/ExpenseParticipant.java#22-112), [Transaction](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/Transaction.java#30-145), and [Settlement](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/Settlement.java#32-157) to use [String](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/Group.java#93-101) (e.g., `paidBy`, `fromUser`, `toUser`).
+
+### 2. Data Access Layer (DAO)
+- **[UserDAO](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/dao/UserDAO.java#22-71)**: Updated interface [findById(int)](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/dao/ExpenseDAO.java#30-31) to [findByPhone(String)](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/dao/impl/UserDAOImpl.java#39-43).
+- **[UserDAOImpl](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/dao/impl/UserDAOImpl.java#16-57)**: Updated internal `HashMap` to use [String](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/Group.java#93-101) keys.
+- **Other DAOs**: Updated methods to accept [String](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/Group.java#93-101) user IDs (e.g., [getGroupsForUser(String userId)](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/service/GroupService.java#87-93)).
+
+### 3. Service Layer
+- **[GroupService](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/service/GroupService.java#20-125)**: Updated [createGroup](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/service/GroupService.java#32-50), [addMember](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/service/GroupService.java#51-68), [removeMember](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/service/GroupService.java#69-79) to use [String](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/Group.java#93-101) user identifiers.
+- **[ExpenseService](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/service/ExpenseService.java#25-171)**: Updated expense creation logic to handle [String](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/Group.java#93-101) participants and custom split maps.
+- **[PaymentService](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/service/PaymentService.java#25-149)**: Updated generic payment recording to use [String](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/Group.java#93-101) user IDs.
+- **[SettlementService](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/service/SettlementService.java#20-265)**: Refactored debt simplification algorithm to work with [String](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/Group.java#93-101) nodes.
+
+### 4. Controller Layer (Servlets)
+- **[GroupController](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/controller/GroupController.java#27-134)**, **[ExpenseController](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/controller/ExpenseController.java#26-160)**, **[PaymentController](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/controller/PaymentController.java#26-150)**:
+    - Updated [doPost](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/controller/PaymentController.java#105-149) methods to parse request parameters (e.g., `paidBy`, `participants`) as Strings instead of Integers.
+    - Updated [doGet](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/controller/GroupController.java#39-88) methods to handle [String](file:///d:/dbms%20java%20web/expense-tracker/src/main/java/com/expensetracker/model/Group.java#93-101) user ID lookups.
+
+### 5. Frontend
+- **[add-expense.html](file:///d:/dbms%20java%20web/expense-tracker/src/main/webapp/add-expense.html)**: Updated JavaScript to use `member.phoneNumber` instead of `member.userId` for dropdown values and checkbox values.
+- **[record-payment.html](file:///d:/dbms%20java%20web/expense-tracker/src/main/webapp/record-payment.html)**: Updated JavaScript to use `member.phoneNumber`. Fixed templating issue in `onclick` handlers to properly quote String arguments (e.g., [prefill('123', '456', ...)](file:///d:/dbms%20java%20web/expense-tracker/src/main/webapp/record-payment.html#125-130)).
+
+### 6. SQL Schema
+- **[schema.sql](file:///d:/dbms%20java%20web/expense-tracker/sql/schema.sql)**: Updated `users` table to use `phone_number VARCHAR(20) PRIMARY KEY`. Updated all foreign keys in other tables to `VARCHAR(20)`.
+- **[data.sql](file:///d:/dbms%20java%20web/expense-tracker/sql/data.sql)**: Updated sample data to use dummy phone numbers (e.g., '9876543210') instead of integer IDs.
+- **[triggers.sql](file:///d:/dbms%20java%20web/expense-tracker/sql/triggers.sql), [queries.sql](file:///d:/dbms%20java%20web/expense-tracker/sql/queries.sql), [views.sql](file:///d:/dbms%20java%20web/expense-tracker/sql/views.sql)**: Updated all SQL logic to align with the new schema.
+
+## Verification
+- **Build**: Successfully ran `mvn package` to verify compilation and build integrity. The build passed with no errors.
+
+## Next Steps
+- **Functional Testing**: Manually verify user flows (Add Expense, Record Payment) in the browser to ensure end-to-end functionality.
+- **Database Migration**: If moving to a real database, use the updated [schema.sql](file:///d:/dbms%20java%20web/expense-tracker/sql/schema.sql) to initialize the database.
