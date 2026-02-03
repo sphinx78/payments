@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settle Up - ExpenseTracker</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">ExpenseTracker <span>| Friend Groups</span></div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Dashboard</a></li>
+                    <li><a href="create-group.html">Create Group</a></li>
+                    <li><a href="add-expense.html" class="active">Expenses &amp; Payments</a></li>
+                    <li><a href="settlement.html">Settlements</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <main>
+            <div class="page-header">
+                <h1 class="page-title">Settle Up</h1>
+            </div>
+            <div class="card">
+                <p class="empty-state">
+                    Payments have moved into the unified <strong>Expenses &amp; Payments</strong> screen.
+                    You’ll be redirected there now.
+                </p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Redirect into unified flow, defaulting to the payment tab
+        window.location.replace('add-expense.html#payment');
+    </script>
+</body>
+
+</html>

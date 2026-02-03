@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expenses &amp; Payments - ExpenseTracker</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">ExpenseTracker <span>| Friend Groups</span></div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Dashboard</a></li>
+                    <li><a href="create-group.html">Create Group</a></li>
+                    <li><a href="add-member.html">Add Member</a></li>
+                    <li><a href="add-expense.html" class="active">Expenses &amp; Payments</a></li>
+                    <li><a href="settlement.html">Settlements</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <main>
+            <div class="page-header">
+                <h1 class="page-title">Expenses &amp; Payments</h1>
+                <select id="groupId" class="group-select" onchange="onGlobalGroupChange()">
+                    <option value="">Select group</option>
+                </select>
+            </div>
+
+            <div id="alertBox" class="hidden"></div>
+
+            <div class="card">
+                <div class="tab-switch">
+                    <button type="button" id="tabExpense" class="tab-link active" onclick="showTab('expense')">
+                        Add Expense
+                    </button>
+                    <button type="button" id="tabPayment" class="tab-link" onclick="showTab('payment')">
+                        Settle Up
+                    </button>
+                </div>
+
+                <div id="expenseTab" class="tab-panel active">
+                    <form id="expenseForm" onsubmit="submitExpense(event)">
+                        <div class="grid grid-2">
+                            <div class="form-group">
+                                <label>Group</label>
+                                <input type="text" id="expenseGroupName" disabled
+                                    placeholder="Select a group from the top-right">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="paidBy">Paid By *</label>
+                                <select id="paidBy" name="paidBy" required>
+                                    <option value="">Select who paid...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Description *</label>
+                            <input type="text" id="description" name="description"
+                                placeholder="e.g., Dinner at restaurant" required>
+                        </div>
+
+                        <div class="grid grid-2">
+                            <div class="form-group">
+                                <label for="amount">Amount (₹) *</label>
+                                <input type="number" id="amount" name="amount" placeholder="0.00" step="0.01" min="0.01"
+                                    required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="splitType">Split Type *</label>
+                                <select id="splitType" name="splitType" onchange="toggleCustomSplit()">
+                                    <option value="EQUAL">Equal Split</option>
+                                    <option value="CUSTOM">Custom Split</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Participants *</label>
+                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 10px;">
+                                Select members who participated in this expense
+                            </p>
+                            <div id="participantsContainer" class="checkbox-group">
+                                <p style="color: var(--text-secondary);">Select a group first</p>
+                            </div>
+                        </div>
+
+                        <div id="customSplitContainer" class="hidden">
+                            <div class="form-group">
+                                <label>Custom Amounts</label>
+                                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 10px;">
+                                    Enter specific amount for each participant
+                                </p>
+                                <div id="customAmountsContainer"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">Add Expense</button>
+                            <a href="index.html" class="btn btn-outline">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="paymentTab" class="tab-panel">
+                    <form id="paymentForm" onsubmit="submitPayment(event)">
+                        <div class="grid grid-2">
+                            <div class="form-group">
+                                <label>Group</label>
+                                <input type="text" id="paymentGroupName" disabled
+                                    placeholder="Select a group from the top-right">
+                            </div>
+                            <div class="form-group">
+                                <label>Who is Paying *</label>
+                                <select id="fromUser" required>
+                                    <option value="">Select...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-2">
+                            <div class="form-group">
+                                <label>Paying To *</label>
+                                <select id="toUser" required>
+                                    <option value="">Select...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Amount (₹) *</label>
+                                <input type="number" id="paymentAmount" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Note (Optional)</label>
+                            <input type="text" id="note" placeholder="Payment note">
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success">Settle Up</button>
+                        </div>
+                    </form>
+                    <div class="card mt-20" style="margin-left: 0; margin-right: 0;">
+                        <div class="card-header">
+                            <h3 class="card-title">Pending Settlements</h3>
+                        </div>
+                        <div id="pendingSettlements">
+                            <p class="empty-state">Select a group</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Preview Card -->
+            <div class="card" id="previewCard" style="display: none;">
+                <div class="card-header">
+                    <h3 class="card-title">Split Preview</h3>
+                </div>
+                <div id="splitPreview"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const ET = (() => {
+            const API_BASE = '/api';
+            const KEY = 'expenseTracker.selectedGroupId';
+
+            function getStoredGroupId() {
+                try {
+                    return window.localStorage.getItem(KEY) || '';
+                } catch (e) {
+                    return '';
+                }
+            }
+
+            function setStoredGroupId(id) {
+                try {
+                    if (id && String(id).length > 0) {
+                        window.localStorage.setItem(KEY, String(id));
+                    } else {
+                        window.localStorage.removeItem(KEY);
+                    }
+                } catch (e) { }
+            }
+
+            return { API_BASE, getStoredGroupId, setStoredGroupId };
+        })();
+
+        let groupMembers = [];
+        let userBalances = [];
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initGroupFromGlobal();
+            const hash = window.location.hash;
+            if (hash === '#payment') {
+                showTab('payment');
+            }
+        });
+
+        async function initGroupFromGlobal() {
+            try {
+                const response = await fetch(`${ET.API_BASE}/group`);
+                const groups = await response.json();
+                const select = document.getElementById('groupId');
+                const storedId = ET.getStoredGroupId();
+
+                select.innerHTML = '<option value="">Select group</option>';
+                groups.forEach(group => {
+                    const option = document.createElement('option');
+                    option.value = group.groupId;
+                    option.textContent = group.name;
+                    select.appendChild(option);
+                });
+
+                if (storedId && groups.some(g => String(g.groupId) === storedId)) {
+                    select.value = storedId;
+                    const groupName = groups.find(g => String(g.groupId) === storedId).name;
+                    document.getElementById('expenseGroupName').value = groupName;
+                    document.getElementById('paymentGroupName').value = groupName;
+                    loadGroupMembers(storedId);
+                    loadPaymentSideData(storedId);
+                }
+            } catch (e) {
+                console.error('Error initializing group:', e);
+            }
+        }
+
+        function onGlobalGroupChange() {
+            const groupId = document.getElementById('groupId').value;
+            ET.setStoredGroupId(groupId);
+            if (!groupId) {
+                document.getElementById('expenseGroupName').value = '';
+                document.getElementById('paymentGroupName').value = '';
+                return;
+            }
+            const sel = document.getElementById('groupId');
+            const name = sel.options[sel.selectedIndex].text;
+            document.getElementById('expenseGroupName').value = name;
+            document.getElementById('paymentGroupName').value = name;
+            loadGroupMembers(groupId);
+            loadPaymentSideData(groupId);
+        }
+
+        async function loadGroupMembers(groupId) {
+            if (!groupId) return;
+            try {
+                const response = await fetch(`${ET.API_BASE}/group/${groupId}/members`);
+                groupMembers = await response.json();
+
+                const paidBySelect = document.getElementById('paidBy');
+                paidBySelect.innerHTML = '<option value="">Select who paid...</option>';
+                groupMembers.forEach(member => {
+                    const option = document.createElement('option');
+                    option.value = member.phoneNumber;
+                    option.textContent = member.name;
+                    paidBySelect.appendChild(option);
+                });
+
+                const container = document.getElementById('participantsContainer');
+                container.innerHTML = groupMembers.map(member => `
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="participants" value="${member.phoneNumber}" 
+                               onchange="updatePreview()" checked>
+                        <span>${member.name}</span>
+                    </label>
+                `).join('');
+
+                updatePreview();
+            } catch (error) {
+                console.error('Error loading members:', error);
+            }
+        }
+
+        function toggleCustomSplit() {
+            const splitType = document.getElementById('splitType').value;
+            const customContainer = document.getElementById('customSplitContainer');
+
+            if (splitType === 'CUSTOM') {
+                customContainer.classList.remove('hidden');
+                updateCustomAmounts();
+            } else {
+                customContainer.classList.add('hidden');
+            }
+            updatePreview();
+        }
+
+        function updateCustomAmounts() {
+            const selectedParticipants = getSelectedParticipants();
+            const container = document.getElementById('customAmountsContainer');
+
+            container.innerHTML = selectedParticipants.map(userId => {
+                const member = groupMembers.find(m => m.phoneNumber == userId);
+                return `
+                    <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                        <label style="min-width: 150px; margin: 0;">${member.name}:</label>
+                        <input type="number" name="customAmount_${userId}" 
+                               placeholder="0.00" step="0.01" style="flex: 1;"
+                               onchange="updatePreview()">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getSelectedParticipants() {
+            const checkboxes = document.querySelectorAll('input[name="participants"]:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        function updatePreview() {
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            const splitType = document.getElementById('splitType').value;
+            const participants = getSelectedParticipants();
+
+            if (participants.length === 0 || amount === 0) {
+                document.getElementById('previewCard').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('previewCard').style.display = 'block';
+            const previewDiv = document.getElementById('splitPreview');
+
+            if (splitType === 'EQUAL') {
+                const share = (amount / participants.length).toFixed(2);
+                previewDiv.innerHTML = participants.map(userId => {
+                    const member = groupMembers.find(m => m.phoneNumber == userId);
+                    return `
+                        <div class="settlement-item">
+                            <div class="member-chip">
+                                <div class="member-avatar">${member.name.charAt(0)}</div>
+                                <span>${member.name}</span>
+                            </div>
+                            <span>₹${share}</span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                // Custom split preview
+                let previewHtml = '';
+                let total = 0;
+                participants.forEach(userId => {
+                    const member = groupMembers.find(m => m.phoneNumber == userId);
+                    const input = document.querySelector(`input[name="customAmount_${userId}"]`);
+                    const customAmount = input ? parseFloat(input.value) || 0 : 0;
+                    total += customAmount;
+                    previewHtml += `
+                        <div class="settlement-item">
+                            <div class="member-chip">
+                                <div class="member-avatar">${member.name.charAt(0)}</div>
+                                <span>${member.name}</span>
+                            </div>
+                            <span>₹${customAmount.toFixed(2)}</span>
+                        </div>
+                    `;
+                });
+
+                const diff = amount - total;
+                if (Math.abs(diff) > 0.01) {
+                    previewHtml += `
+                        <div class="alert ${diff > 0 ? 'alert-error' : 'alert-info'}">
+                            ${diff > 0 ? 'Remaining: ₹' + diff.toFixed(2) : 'Over by: ₹' + Math.abs(diff).toFixed(2)}
+                        </div>
+                    `;
+                }
+                previewDiv.innerHTML = previewHtml;
+            }
+        }
+
+        async function submitExpense(event) {
+            event.preventDefault();
+
+            const groupId = document.getElementById('groupId').value;
+            if (!groupId) {
+                showAlert('Please select a group first.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('groupId', groupId);
+            formData.append('paidBy', document.getElementById('paidBy').value);
+            formData.append('amount', document.getElementById('amount').value);
+            formData.append('description', document.getElementById('description').value);
+            formData.append('splitType', document.getElementById('splitType').value);
+
+            const participants = getSelectedParticipants();
+            participants.forEach(p => formData.append('participants', p));
+
+            if (document.getElementById('splitType').value === 'CUSTOM') {
+                participants.forEach(userId => {
+                    const input = document.querySelector(`input[name="customAmount_${userId}"]`);
+                    formData.append('customAmounts', input ? input.value : '0');
+                });
+            }
+
+            try {
+                const response = await fetch(`${ET.API_BASE}/expense`, {
+                    method: 'POST',
+                    body: new URLSearchParams(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Expense added successfully!', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    showAlert('Error: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Error adding expense: ' + error.message, 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.className = `alert alert-${type}`;
+            alertBox.textContent = message;
+            alertBox.classList.remove('hidden');
+        }
+
+        // Update preview when amount changes
+        document.getElementById('amount').addEventListener('input', updatePreview);
+
+        function showTab(kind) {
+            const isExpense = kind === 'expense';
+            document.getElementById('expenseTab').classList.toggle('active', isExpense);
+            document.getElementById('paymentTab').classList.toggle('active', !isExpense);
+            document.getElementById('tabExpense').classList.toggle('active', isExpense);
+            document.getElementById('tabPayment').classList.toggle('active', !isExpense);
+        }
+
+        async function loadPaymentSideData(groupId) {
+            if (!groupId) return;
+
+            // Load balances to know who owes whom
+            const balancesRes = await fetch(`${ET.API_BASE}/settlement/balances?groupId=${groupId}`);
+            userBalances = await balancesRes.json();
+
+            const whoOwes = userBalances.filter(b => parseFloat(b.netBalance) < 0);
+
+            const fromSelect = document.getElementById('fromUser');
+            const toSelect = document.getElementById('toUser');
+            fromSelect.innerHTML = '<option value="">Select...</option>';
+            toSelect.innerHTML = '<option value="">Select...</option>';
+
+            // Only users who owe money can pay
+            whoOwes.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.userId || b.userPhone || b.phoneNumber || b.user; // backend uses userId (phone)
+                opt.textContent = `${b.userName}`;
+                fromSelect.appendChild(opt);
+            });
+
+            // Everyone can be a receiver
+            userBalances.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.userId || b.userPhone || b.phoneNumber || b.user;
+                opt.textContent = `${b.userName}`;
+                toSelect.appendChild(opt);
+            });
+
+            // Pending settlements for quick prefill
+            const settleRes = await fetch(`${ET.API_BASE}/settlement/summary?groupId=${groupId}`);
+            const settlements = await settleRes.json();
+            const container = document.getElementById('pendingSettlements');
+
+            if (settlements.length === 0) {
+                container.innerHTML = '<p class="empty-state">All settled!</p>';
+            } else {
+                container.innerHTML = settlements.map(s => `
+                    <div class="settlement-item" onclick="prefillPayment('${s.fromUserId}','${s.toUserId}',${s.amount})" style="cursor:pointer">
+                        <span>${s.fromUserName} → ${s.toUserName}</span>
+                        <span class="settlement-amount">₹${parseFloat(s.amount).toFixed(2)}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function findBalanceForUser(userId) {
+            if (!userBalances) return null;
+            return userBalances.find(b => (b.userId || b.userPhone || b.phoneNumber || b.user) === userId) || null;
+        }
+
+        function prefillPayment(from, to, amount) {
+            document.getElementById('fromUser').value = from;
+            document.getElementById('toUser').value = to;
+            document.getElementById('paymentAmount').value = amount;
+            showTab('payment');
+        }
+
+        async function submitPayment(event) {
+            event.preventDefault();
+
+            const groupId = document.getElementById('groupId').value;
+            if (!groupId) {
+                showAlert('Please select a group first.', 'error');
+                return;
+            }
+
+            const fromUser = document.getElementById('fromUser').value;
+            const toUser = document.getElementById('toUser').value;
+            const amount = document.getElementById('paymentAmount').value;
+            const note = document.getElementById('note').value;
+
+            if (!fromUser || !toUser) {
+                showAlert('Please choose who is paying and who receives.', 'error');
+                return;
+            }
+            if (fromUser === toUser) {
+                showAlert('You cannot pay yourself.', 'error');
+                return;
+            }
+
+            const fromBalance = findBalanceForUser(fromUser);
+            if (!fromBalance || parseFloat(fromBalance.netBalance) >= 0) {
+                showAlert('Only members who owe money can make a payment.', 'error');
+                return;
+            }
+
+            const params = new URLSearchParams({
+                fromUser,
+                toUser,
+                amount,
+                note
+            });
+
+            try {
+                const response = await fetch(`${ET.API_BASE}/payment`, { method: 'POST', body: params });
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showAlert('Payment recorded!', 'success');
+                    document.getElementById('paymentForm').reset();
+                    loadPaymentSideData(groupId);
+                } else {
+                    showAlert('Error: ' + (result.error || 'Failed to record payment'), 'error');
+                }
+            } catch (e) {
+                showAlert('Error recording payment: ' + e.message, 'error');
+            }
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-panel').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`#${tabName}Tab`).classList.add('active');
+
+            document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
+            document.querySelector(`#tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('active');
+        }
+    </script>
+</body>
+
+</html>
