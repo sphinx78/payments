@@ -1,0 +1,12 @@
+# Copy this file to db.properties and set your MySQL password for this computer.
+# db.properties is not committed to git so each computer can have its own password.
+#
+# On a new computer:
+#   1. Copy db.properties.example to db.properties
+#   2. Set db.password to your MySQL root password
+#   3. Run setup_db.bat or mvn exec:java to create the database
+
+db.url=jdbc:mysql://localhost:3306/expense_tracker_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+db.url.server=jdbc:mysql://localhost:3306/?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+db.user=root
+db.password=YOUR_MYSQL_PASSWORD_HERE

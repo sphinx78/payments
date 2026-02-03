@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Member - ExpenseTracker</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">ExpenseTracker <span>| Friend Groups</span></div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html">Dashboard</a></li>
+                    <li><a href="create-group.html">Create Group</a></li>
+                    <li><a href="add-member.html" class="active">Add Member</a></li>
+                    <li><a href="transaction.html">Transactions</a></li>
+                    <li><a href="settlement.html">Settlements</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <main>
+            <div class="page-header">
+                <h1 class="page-title">Add Member to Group</h1>
+            </div>
+
+            <div id="alertBox" class="hidden"></div>
+
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <form id="addMemberForm" onsubmit="submitMember(event)">
+                    <div class="form-group">
+                        <label for="groupSelect">Select Group *</label>
+                        <select id="groupSelect" name="groupSelect" required>
+                            <option value="">Loading groups...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="memberName">Member Name *</label>
+                        <input type="text" id="memberName" name="memberName" placeholder="Enter member name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="memberPhone">Member Phone Number *</label>
+                        <input type="tel" id="memberPhone" name="memberPhone" placeholder="e.g., 9876543215" required
+                            pattern="[0-9]{10}" title="Please enter a 10-digit phone number">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="memberEmail">Member Email *</label>
+                        <input type="email" id="memberEmail" name="memberEmail" placeholder="e.g., member@email.com"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary" style="width: 100%">Add Member</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        document.addEventListener('DOMContentLoaded', loadGroups);
+
+        async function loadGroups() {
+            try {
+                // Load Groups only
+                const groupRes = await fetch(`${API_BASE}/group`);
+                const groups = await groupRes.json();
+                const groupSelect = document.getElementById('groupSelect');
+                groupSelect.innerHTML = '<option value="">Select Group</option>';
+                groups.forEach(g => {
+                    groupSelect.innerHTML += `<option value="${g.groupId}">${g.name}</option>`;
+                });
+            } catch (error) {
+                console.error('Error loading groups:', error);
+                showAlert('Error loading groups. Ensure backend is running.', 'error');
+            }
+        }
+
+        async function submitMember(event) {
+            event.preventDefault();
+
+            const groupId = document.getElementById('groupSelect').value;
+            const groupName = document.getElementById('groupSelect').selectedOptions[0].text;
+            const memberName = document.getElementById('memberName').value;
+            const memberPhone = document.getElementById('memberPhone').value;
+            const memberEmail = document.getElementById('memberEmail').value;
+
+            const params = new URLSearchParams({
+                memberName: memberName,
+                memberPhone: memberPhone,
+                memberEmail: memberEmail
+            });
+
+            try {
+                const response = await fetch(`${API_BASE}/group/${groupId}/members`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showAlert(`Successfully added ${memberName} to ${groupName}!`, 'success');
+                    // Reset form fields
+                    document.getElementById('memberName').value = "";
+                    document.getElementById('memberPhone').value = "";
+                    document.getElementById('memberEmail').value = "";
+                } else {
+                    showAlert('Error: ' + (result.message || 'Failed to add member'), 'error');
+                }
+            } catch (error) {
+                showAlert('Error adding member: ' + error.message, 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.className = `alert alert-${type}`;
+            alertBox.textContent = message;
+            alertBox.classList.remove('hidden');
+        }
+    </script>
+</body>
+
+</html>

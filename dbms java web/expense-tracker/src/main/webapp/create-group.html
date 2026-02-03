@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Group - ExpenseTracker</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">ExpenseTracker <span>| Friend Groups</span></div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html">Dashboard</a></li>
+                    <li><a href="create-group.html" class="active">Create Group</a></li>
+                    <li><a href="add-member.html">Add Member</a></li>
+                    <li><a href="transaction.html">Transactions</a></li>
+                    <li><a href="settlement.html">Settlements</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <main>
+            <div class="page-header">
+                <h1 class="page-title">Create New Group</h1>
+            </div>
+
+            <div id="alertBox" class="hidden"></div>
+
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <form id="createGroupForm" onsubmit="submitGroup(event)">
+                    <div class="form-group">
+                        <label for="name">Group Name *</label>
+                        <input type="text" id="name" name="name" placeholder="e.g., Goa Trip 2024" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" placeholder="What's this group for?"
+                            rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="creatorName">Your Name *</label>
+                        <input type="text" id="creatorName" name="creatorName" placeholder="Enter your name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="creatorPhone">Your Phone Number *</label>
+                        <input type="tel" id="creatorPhone" name="creatorPhone" placeholder="e.g., 9876543210" required
+                            pattern="[0-9]{10}" title="Please enter a 10-digit phone number">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="creatorEmail">Your Email *</label>
+                        <input type="email" id="creatorEmail" name="creatorEmail" placeholder="e.g., you@email.com"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary" style="width: 100%">Create Group</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        async function submitGroup(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
+            const creatorName = document.getElementById('creatorName').value;
+            const creatorPhone = document.getElementById('creatorPhone').value;
+            const creatorEmail = document.getElementById('creatorEmail').value;
+
+            const params = new URLSearchParams({
+                name: name,
+                description: description,
+                creatorName: creatorName,
+                creatorPhone: creatorPhone,
+                creatorEmail: creatorEmail
+            });
+
+            try {
+                const response = await fetch(`${API_BASE}/group`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params
+                });
+
+                if (response.status === 201) {
+                    const group = await response.json();
+                    showAlert(`Group "${group.name}" created successfully!`, 'success');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    const result = await response.json();
+                    showAlert('Error: ' + (result.error || 'Failed to create group'), 'error');
+                }
+            } catch (error) {
+                showAlert('Error creating group: ' + error.message, 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.className = `alert alert-${type}`;
+            alertBox.textContent = message;
+            alertBox.classList.remove('hidden');
+        }
+    </script>
+</body>
+
+</html>

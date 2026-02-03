@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ExpenseTracker</string>
+    
+    <!-- Navigation -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_groups">Groups</string>
+    <string name="nav_expenses">Expenses</string>
+    <string name="nav_settlements">Settlements</string>
+    
+    <!-- Dashboard -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="total_expenses">Total Expenses</string>
+    <string name="total_members">Members</string>
+    <string name="pending_settlements">Pending Settlements</string>
+    <string name="select_group">Select Group</string>
+    <string name="group_members">Group Members</string>
+    <string name="balance_summary">Balance Summary</string>
+    <string name="recent_expenses">Recent Expenses</string>
+    <string name="who_owes_whom">Who Owes Whom</string>
+    
+    <!-- Groups -->
+    <string name="create_group">Create Group</string>
+    <string name="new_group">New Group</string>
+    <string name="group_name">Group Name</string>
+    <string name="group_description">Description</string>
+    <string name="add_members">Add Members</string>
+    <string name="select_members">Select Members</string>
+    
+    <!-- Expenses -->
+    <string name="add_expense">Add Expense</string>
+    <string name="expense_description">What was this expense for?</string>
+    <string name="expense_amount">Amount</string>
+    <string name="paid_by">Paid By</string>
+    <string name="split_type">Split Type</string>
+    <string name="split_equally">Split Equally</string>
+    <string name="custom_split">Custom Split</string>
+    <string name="select_participants">Select Participants</string>
+    
+    <!-- Payments -->
+    <string name="record_payment">Record Payment</string>
+    <string name="from_user">From</string>
+    <string name="to_user">To</string>
+    <string name="payment_amount">Amount</string>
+    <string name="payment_note">Note (optional)</string>
+    
+    <!-- Settlements -->
+    <string name="settlements">Settlements</string>
+    <string name="pending">Pending</string>
+    <string name="settled">Settled</string>
+    <string name="simplify_debts">Simplify Debts</string>
+    <string name="all_settled_up">All settled up! 🎉</string>
+    
+    <!-- Common -->
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="submit">Submit</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="view_all">View All</string>
+    <string name="no_data">No data available</string>
+    <string name="currency_symbol">₹</string>
+    
+    <!-- Messages -->
+    <string name="group_created_success">Group created successfully!</string>
+    <string name="expense_added_success">Expense added successfully!</string>
+    <string name="payment_recorded_success">Payment recorded successfully!</string>
+    <string name="error_occurred">An error occurred. Please try again.</string>
+    <string name="field_required">This field is required</string>
+    <string name="invalid_amount">Please enter a valid amount</string>
+</resources>

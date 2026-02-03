@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExpenseTracker - Friend Group Expense Management</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">ExpenseTracker <span>| Friend Groups</span></div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html" class="active">Dashboard</a></li>
+                    <li><a href="create-group.html">Create Group</a></li>
+                    <li><a href="transaction.html">Transactions</a></li>
+                    <li><a href="settlement.html">Settlements</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <main>
+            <div class="page-header">
+                <h1 class="page-title">Dashboard</h1>
+                <div>
+                    <a href="create-group.html" class="btn btn-primary" style="margin-right: 5px;">+ New Group</a>
+                    <a href="add-member.html" class="btn btn-outline" style="margin-right: 10px;">+ Add Member</a>
+                    <select id="groupSelect" class="btn btn-outline" onchange="loadGroupData()">
+                        <option value="">Select Group</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalExpenses">₹0</div>
+                    <div class="stat-label">Total Expenses</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-value" id="totalMembers">0</div>
+                    <div class="stat-label">Members</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-value" id="pendingAmount">₹0</div>
+                    <div class="stat-label">Pending Settlements</div>
+                </div>
+            </div>
+
+            <!-- Grid Layout -->
+            <div class="grid grid-2">
+                <!-- Group Members -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Group Members</h3>
+                    </div>
+                    <div id="membersList" class="member-list">
+                        <div class="empty-state">
+                            <p>Select a group to view members</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Balance Summary -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Balance Summary</h3>
+                    </div>
+                    <div id="balancesList">
+                        <div class="empty-state">
+                            <p>Select a group to view balances</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Expenses -->
+            <div class="card mt-20">
+                <div class="card-header">
+                    <h3 class="card-title">Recent Expenses</h3>
+                    <a href="add-expense.html" class="btn btn-primary">+ Add Expense</a>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Paid By</th>
+                            <th>Split Type</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expensesList">
+                        <tr>
+                            <td colspan="5" class="text-center">Select a group to view expenses</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Who Owes Whom -->
+            <div class="card mt-20">
+                <div class="card-header">
+                    <h3 class="card-title">Who Owes Whom</h3>
+                    <a href="settlement.html" class="btn btn-outline">View All</a>
+                </div>
+                <div id="settlementsList">
+                    <div class="empty-state">
+                        <p>Select a group to view settlements</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // API Base URL
+        const API_BASE = '/api';
+
+        // Load groups on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            loadGroups();
+        });
+
+        // Load all groups
+        async function loadGroups() {
+            try {
+                const response = await fetch(`${API_BASE}/group`);
+                const groups = await response.json();
+
+                const select = document.getElementById('groupSelect');
+                groups.forEach(group => {
+                    const option = document.createElement('option');
+                    option.value = group.groupId;
+                    option.textContent = group.name;
+                    select.appendChild(option);
+                });
+
+                // Auto-select first group
+                if (groups.length > 0) {
+                    select.value = groups[0].groupId;
+                    loadGroupData();
+                }
+            } catch (error) {
+                console.error('Error loading groups:', error);
+            }
+        }
+
+        // Load group data
+        async function loadGroupData() {
+            const groupId = document.getElementById('groupSelect').value;
+            if (!groupId) return;
+
+            // Load members
+            loadMembers(groupId);
+
+            // Load expenses
+            loadExpenses(groupId);
+
+            // Load balances
+            loadBalances(groupId);
+
+            // Load settlements
+            loadSettlements(groupId);
+        }
+
+        // Load members
+        async function loadMembers(groupId) {
+            try {
+                const response = await fetch(`${API_BASE}/group/${groupId}/members`);
+                const members = await response.json();
+
+                document.getElementById('totalMembers').textContent = members.length;
+
+                const membersList = document.getElementById('membersList');
+                membersList.innerHTML = members.map(member => `
+                    <div class="member-chip">
+                        <div class="member-avatar">${member.name.charAt(0)}</div>
+                        <span>${member.name}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading members:', error);
+            }
+        }
+
+        // Load expenses
+        async function loadExpenses(groupId) {
+            try {
+                const response = await fetch(`${API_BASE}/expense?groupId=${groupId}`);
+                const expenses = await response.json();
+
+                // Calculate total
+                const total = expenses.reduce((sum, e) => sum + parseFloat(e.expense.amount), 0);
+                document.getElementById('totalExpenses').textContent = '₹' + total.toFixed(2);
+
+                const tbody = document.getElementById('expensesList');
+                if (expenses.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">No expenses yet</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = expenses.slice(0, 5).map(e => `
+                    <tr>
+                        <td>${e.expense.description}</td>
+                        <td><strong>₹${parseFloat(e.expense.amount).toFixed(2)}</strong></td>
+                        <td>${e.paidByName}</td>
+                        <td><span class="badge badge-pending">${e.expense.splitType}</span></td>
+                        <td>${new Date(e.expense.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading expenses:', error);
+            }
+        }
+
+        // Load balances
+        async function loadBalances(groupId) {
+            try {
+                const response = await fetch(`${API_BASE}/settlement/balances?groupId=${groupId}`);
+                const balances = await response.json();
+
+                const balancesList = document.getElementById('balancesList');
+                if (balances.length === 0) {
+                    balancesList.innerHTML = '<p class="empty-state">All settled up!</p>';
+                    return;
+                }
+
+                balancesList.innerHTML = balances.map(b => {
+                    const isPositive = parseFloat(b.netBalance) >= 0;
+                    return `
+                        <div class="settlement-item">
+                            <div class="member-chip">
+                                <div class="member-avatar">${b.userName.charAt(0)}</div>
+                                <span>${b.userName}</span>
+                            </div>
+                            <span class="${isPositive ? 'balance-positive' : 'balance-negative'}">
+                                ${isPositive ? '+' : ''}₹${parseFloat(b.netBalance).toFixed(2)}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading balances:', error);
+            }
+        }
+
+        // Load settlements
+        async function loadSettlements(groupId) {
+            try {
+                const response = await fetch(`${API_BASE}/settlement/summary?groupId=${groupId}`);
+                const settlements = await response.json();
+
+                // Calculate pending amount
+                const pending = settlements.reduce((sum, s) => sum + parseFloat(s.amount), 0);
+                document.getElementById('pendingAmount').textContent = '₹' + pending.toFixed(2);
+
+                const settlementsList = document.getElementById('settlementsList');
+                if (settlements.length === 0) {
+                    settlementsList.innerHTML = '<p class="empty-state">All settled up! 🎉</p>';
+                    return;
+                }
+
+                settlementsList.innerHTML = settlements.slice(0, 5).map(s => `
+                    <div class="settlement-item">
+                        <div class="settlement-users">
+                            <div class="member-chip">
+                                <div class="member-avatar">${s.fromUserName.charAt(0)}</div>
+                                <span>${s.fromUserName}</span>
+                            </div>
+                            <span class="settlement-arrow">→ owes →</span>
+                            <div class="member-chip">
+                                <div class="member-avatar">${s.toUserName.charAt(0)}</div>
+                                <span>${s.toUserName}</span>
+                            </div>
+                        </div>
+                        <span class="settlement-amount">₹${parseFloat(s.amount).toFixed(2)}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading settlements:', error);
+            }
+        }
+    </script>
+</body>
+
+</html>

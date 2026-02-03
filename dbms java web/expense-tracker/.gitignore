@@ -1,0 +1,15 @@
+# Local DB config - each computer has its own password
+db.properties
+
+# Maven
+target/
+pom.xml.tag
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

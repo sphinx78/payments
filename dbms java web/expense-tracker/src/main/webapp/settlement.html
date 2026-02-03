@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settlements - ExpenseTracker</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">ExpenseTracker <span>| Friend Groups</span></div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html">Dashboard</a></li>
+                    <li><a href="create-group.html">Create Group</a></li>
+                    <li><a href="add-member.html">Add Member</a></li>
+                    <li><a href="transaction.html">Transactions</a></li>
+                    <li><a href="settlement.html" class="active">Settlements</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <main>
+            <div class="page-header">
+                <h1 class="page-title">Settlement Summary</h1>
+                <select id="groupSelect" class="btn btn-outline" onchange="loadData()">
+                    <option value="">Select Group</option>
+                </select>
+            </div>
+
+            <!-- Balance Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="pendingCount">0</div>
+                    <div class="stat-label">Pending Settlements</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-value" id="totalPending">₹0</div>
+                    <div class="stat-label">Total Outstanding</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-value" id="settledCount">0</div>
+                    <div class="stat-label">Settled</div>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <!-- Who Owes Whom -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Who Owes Whom</h3>
+                    </div>
+                    <div id="whoOwesWhom">
+                        <p class="empty-state">Select a group</p>
+                    </div>
+                </div>
+
+                <!-- Simplified Debts -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Simplified Settlements</h3>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 15px;">
+                        Optimized transactions to settle all debts with minimum payments
+                    </p>
+                    <div id="simplified">
+                        <p class="empty-state">Select a group</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Member Balances -->
+            <div class="card mt-20">
+                <div class="card-header">
+                    <h3 class="card-title">Member Balance Summary</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Net Balance</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="balancesTable">
+                        <tr>
+                            <td colspan="3" class="text-center">Select a group</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Settlement History -->
+            <div class="card mt-20">
+                <div class="card-header">
+                    <h3 class="card-title">All Settlements</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allSettlements">
+                        <tr>
+                            <td colspan="4" class="text-center">Select a group</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        document.addEventListener('DOMContentLoaded', loadGroups);
+
+        async function loadGroups() {
+            const response = await fetch(`${API_BASE}/group`);
+            const groups = await response.json();
+            const select = document.getElementById('groupSelect');
+            groups.forEach(g => {
+                select.innerHTML += `<option value="${g.groupId}">${g.name}</option>`;
+            });
+            if (groups.length > 0) {
+                select.value = groups[0].groupId;
+                loadData();
+            }
+        }
+
+        async function loadData() {
+            const groupId = document.getElementById('groupSelect').value;
+            if (!groupId) return;
+
+            // Load summary
+            const summaryRes = await fetch(`${API_BASE}/settlement/summary?groupId=${groupId}`);
+            const summary = await summaryRes.json();
+
+            document.getElementById('pendingCount').textContent = summary.length;
+            const totalPending = summary.reduce((sum, s) => sum + parseFloat(s.amount), 0);
+            document.getElementById('totalPending').textContent = '₹' + totalPending.toFixed(2);
+
+            const whoOwes = document.getElementById('whoOwesWhom');
+            if (summary.length === 0) {
+                whoOwes.innerHTML = '<p class="empty-state">All settled up! 🎉</p>';
+            } else {
+                whoOwes.innerHTML = summary.map(s => `
+                    <div class="settlement-item">
+                        <div class="settlement-users">
+                            <span class="member-chip"><span class="member-avatar">${s.fromUserName.charAt(0)}</span>${s.fromUserName}</span>
+                            <span>→</span>
+                            <span class="member-chip"><span class="member-avatar">${s.toUserName.charAt(0)}</span>${s.toUserName}</span>
+                        </div>
+                        <span class="settlement-amount">₹${parseFloat(s.amount).toFixed(2)}</span>
+                    </div>
+                `).join('');
+            }
+
+            // Load simplified
+            const simplifyRes = await fetch(`${API_BASE}/settlement/simplify?groupId=${groupId}`);
+            const simplified = await simplifyRes.json();
+
+            const simplifiedDiv = document.getElementById('simplified');
+            if (simplified.length === 0) {
+                simplifiedDiv.innerHTML = '<p class="empty-state">No debts to simplify</p>';
+            } else {
+                simplifiedDiv.innerHTML = simplified.map(s => `
+                    <div class="settlement-item" style="background: #d1fae5;">
+                        <span>${s.fromUserName} pays ${s.toUserName}</span>
+                        <span class="balance-positive">₹${parseFloat(s.amount).toFixed(2)}</span>
+                    </div>
+                `).join('');
+            }
+
+            // Load balances
+            const balancesRes = await fetch(`${API_BASE}/settlement/balances?groupId=${groupId}`);
+            const balances = await balancesRes.json();
+
+            const balancesTable = document.getElementById('balancesTable');
+            balancesTable.innerHTML = balances.map(b => {
+                const isPositive = parseFloat(b.netBalance) >= 0;
+                const status = parseFloat(b.netBalance) === 0 ? 'Settled' : (isPositive ? 'Gets back' : 'Owes');
+                return `
+                    <tr>
+                        <td><span class="member-chip"><span class="member-avatar">${b.userName.charAt(0)}</span>${b.userName}</span></td>
+                        <td class="${isPositive ? 'balance-positive' : 'balance-negative'}">${isPositive ? '+' : ''}₹${parseFloat(b.netBalance).toFixed(2)}</td>
+                        <td><span class="badge badge-${status === 'Settled' ? 'settled' : 'pending'}">${status}</span></td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Load all settlements
+            const allRes = await fetch(`${API_BASE}/settlement?groupId=${groupId}`);
+            const all = await allRes.json();
+
+            document.getElementById('settledCount').textContent = all.filter(s => s.status === 'SETTLED').length;
+
+            const allTable = document.getElementById('allSettlements');
+            allTable.innerHTML = all.map(s => `
+                <tr>
+                    <td>User ${s.fromUser}</td>
+                    <td>User ${s.toUser}</td>
+                    <td>₹${parseFloat(s.netBalance).toFixed(2)}</td>
+                    <td><span class="badge badge-${s.status.toLowerCase()}">${s.status}</span></td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+
+</html>

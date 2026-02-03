@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions - ExpenseTracker</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/toggle.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">ExpenseTracker <span>| Friend Groups</span></div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html">Dashboard</a></li>
+                    <li><a href="create-group.html">Create Group</a></li>
+                    <li><a href="add-member.html">Add Member</a></li>
+                    <li><a href="transaction.html" class="active">Transactions</a></li>
+                    <li><a href="settlement.html">Settlements</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <main>
+            <div class="page-header">
+                <h1 class="page-title">Transactions</h1>
+            </div>
+
+            <!-- Toggle Component -->
+            <div class="toggle-container">
+                <div class="toggle-wrapper">
+                    <button class="toggle-button toggle-button-active" 
+                            id="expenseToggle" 
+                            onclick="switchForm('expense')"
+                            aria-pressed="true"
+                            aria-label="Switch to Expense Entry form">
+                        <span class="toggle-icon">💰</span>
+                        Expense Entry
+                    </button>
+                    <button class="toggle-button" 
+                            id="paymentToggle" 
+                            onclick="switchForm('payment')"
+                            aria-pressed="false"
+                            aria-label="Switch to Payment Entry form">
+                        <span class="toggle-icon">🔄</span>
+                        Payment Entry
+                    </button>
+                </div>
+            </div>
+
+            <div id="alertBox" class="hidden"></div>
+
+            <!-- Expense Form Container -->
+            <div id="expenseContainer" class="form-container active">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Add New Expense</h3>
+                        <p class="card-subtitle">Split costs among group members</p>
+                    </div>
+                    <form id="expenseForm" onsubmit="submitExpense(event)">
+                        <div class="grid grid-2">
+                            <div class="form-group">
+                                <label for="expenseGroupId">Select Group *</label>
+                                <select id="expenseGroupId" name="groupId" required onchange="loadExpenseMembers()">
+                                    <option value="">Choose a group...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="paidBy">Paid By *</label>
+                                <select id="paidBy" name="paidBy" required>
+                                    <option value="">Select who paid...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="expenseDescription">Description *</label>
+                            <input type="text" id="expenseDescription" name="description" 
+                                   placeholder="e.g., Dinner at restaurant" required>
+                        </div>
+
+                        <div class="grid grid-2">
+                            <div class="form-group">
+                                <label for="expenseAmount">Amount (₹) *</label>
+                                <input type="number" id="expenseAmount" name="amount" 
+                                       placeholder="0.00" step="0.01" min="0.01" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="splitType">Split Type *</label>
+                                <select id="splitType" name="splitType" onchange="toggleCustomSplit()">
+                                    <option value="EQUAL">Equal Split</option>
+                                    <option value="CUSTOM">Custom Split</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Participants *</label>
+                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 10px;">
+                                Select members who participated in this expense
+                            </p>
+                            <div id="participantsContainer" class="checkbox-group">
+                                <p style="color: var(--text-secondary);">Select a group first</p>
+                            </div>
+                        </div>
+
+                        <div id="customSplitContainer" class="hidden">
+                            <div class="form-group">
+                                <label>Custom Amounts</label>
+                                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 10px;">
+                                    Enter specific amount for each participant
+                                </p>
+                                <div id="customAmountsContainer"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <span>✓</span> Add Expense
+                            </button>
+                            <a href="index.html" class="btn btn-outline">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Preview Card -->
+                <div class="card" id="expensePreviewCard" style="display: none;">
+                    <div class="card-header">
+                        <h3 class="card-title">Split Preview</h3>
+                    </div>
+                    <div id="splitPreview"></div>
+                </div>
+            </div>
+
+            <!-- Payment Form Container -->
+            <div id="paymentContainer" class="form-container">
+                <div class="grid grid-2">
+                    <!-- Payment Form -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Record Payment</h3>
+                            <p class="card-subtitle">Register a settlement between members</p>
+                        </div>
+                        <form id="paymentForm" onsubmit="submitPayment(event)">
+                            <div class="form-group">
+                                <label for="paymentGroupId">Select Group *</label>
+                                <select id="paymentGroupId" required onchange="loadPaymentData()">
+                                    <option value="">Choose...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="fromUser">Who is Paying *</label>
+                                <select id="fromUser" required>
+                                    <option value="">Select...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="toUser">Paying To *</label>
+                                <select id="toUser" required>
+                                    <option value="">Select...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="paymentAmount">Amount (₹) *</label>
+                                <input type="number" id="paymentAmount" step="0.01" min="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="paymentNote">Note (Optional)</label>
+                                <input type="text" id="paymentNote" placeholder="Payment note">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-success">
+                                    <span>✓</span> Record Payment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Pending Settlements -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Pending Settlements</h3>
+                            <p class="card-subtitle">Click to quick-fill</p>
+                        </div>
+                        <div id="pendingSettlements">
+                            <p class="empty-state">Select a group</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Enhanced CSS for Toggle and Animations -->
+    <style>
+        /* Toggle Container Styles */
+        .toggle-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+        }
+
+        .toggle-wrapper {
+            display: flex;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--border-color);
+        }
+
+        .toggle-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .toggle-button:hover {
+            color: var(--primary-color);
+            background: rgba(79, 70, 229, 0.05);
+        }
+
+        .toggle-button-active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .toggle-button-active:hover {
+            background: var(--primary-dark);
+        }
+
+        .toggle-icon {
+            font-size: 1.25rem;
+        }
+
+        /* Form Container Animation - FIXED VISIBILITY */
+        .form-container {
+            display: none;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(20px);
+        }
+
+        .form-container.active {
+            display: block;
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .form-actions .btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .toggle-wrapper {
+                flex-wrap: wrap;
+                width: 100%;
+            }
+
+            .toggle-button {
+                flex: 1;
+                min-width: 140px;
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .form-actions .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .toggle-button {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+                gap: 4px;
+            }
+
+            .toggle-icon {
+                font-size: 1rem;
+            }
+
+            .toggle-button {
+                min-width: auto;
+            }
+
+            .page-header {
+                padding: 15px 0;
+            }
+        }
+    </style>
+
+    <script>
+        // ============================================
+        // GLOBAL STATE AND API SETUP
+        // ============================================
+        const API_BASE = '/api';
+        let groupMembers = [];
+        let currentForm = 'expense';
+
+        // ============================================
+        // FORM TOGGLE FUNCTIONALITY
+        // ============================================
+        function switchForm(form) {
+            currentForm = form;
+
+            // Update buttons
+            const expenseBtn = document.getElementById('expenseToggle');
+            const paymentBtn = document.getElementById('paymentToggle');
+
+            if (form === 'expense') {
+                expenseBtn.classList.add('toggle-button-active');
+                paymentBtn.classList.remove('toggle-button-active');
+                expenseBtn.setAttribute('aria-pressed', 'true');
+                paymentBtn.setAttribute('aria-pressed', 'false');
+            } else {
+                paymentBtn.classList.add('toggle-button-active');
+                expenseBtn.classList.remove('toggle-button-active');
+                paymentBtn.setAttribute('aria-pressed', 'true');
+                expenseBtn.setAttribute('aria-pressed', 'false');
+            }
+
+            // Update containers
+            const expenseContainer = document.getElementById('expenseContainer');
+            const paymentContainer = document.getElementById('paymentContainer');
+
+            if (form === 'expense') {
+                expenseContainer.classList.add('active');
+                paymentContainer.classList.remove('active');
+                document.title = 'Add Expense - ExpenseTracker';
+            } else {
+                paymentContainer.classList.add('active');
+                expenseContainer.classList.remove('active');
+                document.title = 'Record Payment - ExpenseTracker';
+            }
+        }
+
+        // ============================================
+        // INITIALIZE ON PAGE LOAD
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function () {
+            loadAllGroups();
+            switchForm('expense');
+        });
+
+        // ============================================
+        // LOAD GROUPS FOR BOTH FORMS
+        // ============================================
+        async function loadAllGroups() {
+            try {
+                const response = await fetch(`${API_BASE}/group`);
+                const groups = await response.json();
+
+                // Load into expense form
+                const expenseSelect = document.getElementById('expenseGroupId');
+                expenseSelect.innerHTML = '<option value="">Choose a group...</option>';
+
+                // Load into payment form
+                const paymentSelect = document.getElementById('paymentGroupId');
+                paymentSelect.innerHTML = '<option value="">Choose a group...</option>';
+
+                groups.forEach(group => {
+                    const option1 = document.createElement('option');
+                    option1.value = group.groupId;
+                    option1.textContent = group.name;
+                    expenseSelect.appendChild(option1);
+
+                    const option2 = document.createElement('option');
+                    option2.value = group.groupId;
+                    option2.textContent = group.name;
+                    paymentSelect.appendChild(option2);
+                });
+            } catch (error) {
+                console.error('Error loading groups:', error);
+                showAlert('Error loading groups', 'error');
+            }
+        }
+
+        // ============================================
+        // EXPENSE FORM FUNCTIONS
+        // ============================================
+        async function loadExpenseMembers() {
+            const groupId = document.getElementById('expenseGroupId').value;
+            if (!groupId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/group/${groupId}/members`);
+                groupMembers = await response.json();
+
+                // Update paid by dropdown
+                const paidBySelect = document.getElementById('paidBy');
+                paidBySelect.innerHTML = '<option value="">Select who paid...</option>';
+                groupMembers.forEach(member => {
+                    const option = document.createElement('option');
+                    option.value = member.memberId;
+                    option.textContent = member.name;
+                    paidBySelect.appendChild(option);
+                });
+
+                // Update participants
+                updateParticipants();
+            } catch (error) {
+                console.error('Error loading members:', error);
+                showAlert('Error loading members', 'error');
+            }
+        }
+
+        function updateParticipants() {
+            const container = document.getElementById('participantsContainer');
+            container.innerHTML = '';
+
+            groupMembers.forEach(member => {
+                const label = document.createElement('label');
+                label.className = 'checkbox-item';
+                label.innerHTML = `
+                    <input type="checkbox" value="${member.memberId}" name="participants" 
+                           aria-label="Include ${member.name} in this expense">
+                    <span>${member.name}</span>
+                `;
+                container.appendChild(label);
+            });
+        }
+
+        function toggleCustomSplit() {
+            const splitType = document.getElementById('splitType').value;
+            const customContainer = document.getElementById('customSplitContainer');
+
+            if (splitType === 'CUSTOM') {
+                customContainer.classList.remove('hidden');
+                updateCustomAmounts();
+            } else {
+                customContainer.classList.add('hidden');
+            }
+        }
+
+        function updateCustomAmounts() {
+            const container = document.getElementById('customAmountsContainer');
+            const checkedParticipants = document.querySelectorAll('input[name="participants"]:checked');
+
+            container.innerHTML = '';
+            checkedParticipants.forEach(checkbox => {
+                const member = groupMembers.find(m => m.memberId == checkbox.value);
+                const div = document.createElement('div');
+                div.className = 'form-group';
+                div.innerHTML = `
+                    <label for="amount_${checkbox.value}">${member.name} (₹)</label>
+                    <input type="number" id="amount_${checkbox.value}" 
+                           data-member-id="${checkbox.value}" 
+                           step="0.01" min="0" placeholder="0.00">
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function submitExpense(event) {
+            event.preventDefault();
+
+            const groupId = document.getElementById('expenseGroupId').value;
+            const paidBy = document.getElementById('paidBy').value;
+            const description = document.getElementById('expenseDescription').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const splitType = document.getElementById('splitType').value;
+            const checkedParticipants = Array.from(
+                document.querySelectorAll('input[name="participants"]:checked')
+            ).map(cb => cb.value);
+
+            if (!groupId || !paidBy || !description || !amount || checkedParticipants.length === 0) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+
+            try {
+                const splitData = {};
+                if (splitType === 'EQUAL') {
+                    const perPerson = amount / checkedParticipants.length;
+                    checkedParticipants.forEach(id => {
+                        splitData[id] = perPerson;
+                    });
+                } else {
+                    checkedParticipants.forEach(id => {
+                        const amountInput = document.getElementById(`amount_${id}`);
+                        splitData[id] = parseFloat(amountInput.value) || 0;
+                    });
+                }
+
+                const formData = new URLSearchParams({
+                    groupId: groupId,
+                    paidBy: paidBy,
+                    description: description,
+                    amount: amount,
+                    splitType: splitType,
+                    splitData: JSON.stringify(splitData)
+                });
+
+                const response = await fetch(`${API_BASE}/expense`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Expense added successfully!', 'success');
+                    document.getElementById('expenseForm').reset();
+                } else {
+                    showAlert('Error: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error submitting expense:', error);
+                showAlert('Error submitting expense', 'error');
+            }
+        }
+
+        // ============================================
+        // PAYMENT FORM FUNCTIONS
+        // ============================================
+        async function loadPaymentData() {
+            const groupId = document.getElementById('paymentGroupId').value;
+            if (!groupId) return;
+
+            try {
+                const membersRes = await fetch(`${API_BASE}/group/${groupId}/members`);
+                groupMembers = await membersRes.json();
+
+                ['fromUser', 'toUser'].forEach(id => {
+                    const sel = document.getElementById(id);
+                    sel.innerHTML = '<option value="">Select...</option>';
+                    groupMembers.forEach(m => {
+                        const option = document.createElement('option');
+                        option.value = m.phoneNumber;
+                        option.textContent = m.name;
+                        sel.appendChild(option);
+                    });
+                });
+
+                const settleRes = await fetch(`${API_BASE}/settlement/summary?groupId=${groupId}`);
+                const settlements = await settleRes.json();
+                const container = document.getElementById('pendingSettlements');
+
+                if (settlements.length === 0) {
+                    container.innerHTML = '<p class="empty-state">All settled!</p>';
+                } else {
+                    container.innerHTML = settlements.map(s => `
+                        <div class="settlement-item" 
+                             onclick="prefillPayment('${s.fromUserId}','${s.toUserId}',${s.amount})" 
+                             style="cursor:pointer"
+                             role="button"
+                             tabindex="0"
+                             onkeypress="if(event.key==='Enter') prefillPayment('${s.fromUserId}','${s.toUserId}',${s.amount})"
+                             aria-label="Quick fill: ${s.fromUserName} owes ${s.toUserName} ₹${s.amount}">
+                            <span>${s.fromUserName} → ${s.toUserName}</span>
+                            <span class="settlement-amount">₹${s.amount}</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading payment data:', error);
+                showAlert('Error loading payment data', 'error');
+            }
+        }
+
+        function prefillPayment(from, to, amount) {
+            document.getElementById('fromUser').value = from;
+            document.getElementById('toUser').value = to;
+            document.getElementById('paymentAmount').value = amount;
+        }
+
+        async function submitPayment(event) {
+            event.preventDefault();
+            const fromUser = document.getElementById('fromUser').value;
+            const toUser = document.getElementById('toUser').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const note = document.getElementById('paymentNote').value;
+
+            if (!fromUser || !toUser || !amount || fromUser === toUser) {
+                showAlert('Please fill in all fields and select different users', 'error');
+                return;
+            }
+
+            try {
+                const formData = new URLSearchParams({
+                    fromUser: fromUser,
+                    toUser: toUser,
+                    amount: amount,
+                    note: note
+                });
+
+                const response = await fetch(`${API_BASE}/payment`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Payment recorded successfully!', 'success');
+                    loadPaymentData();
+                    document.getElementById('paymentForm').reset();
+                } else {
+                    showAlert('Error: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error submitting payment:', error);
+                showAlert('Error submitting payment', 'error');
+            }
+        }
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function showAlert(message, type = 'info') {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.innerHTML = `<div class="alert alert-${type}" role="alert">${message}</div>`;
+            alertBox.classList.remove('hidden');
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertBox.classList.add('hidden');
+                }, 3000);
+            }
+        }
+
+        // Keyboard navigation for toggle
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowLeft' && currentForm === 'payment') {
+                document.getElementById('expenseToggle').click();
+            } else if (e.key === 'ArrowRight' && currentForm === 'expense') {
+                document.getElementById('paymentToggle').click();
+            }
+        });
+    </script>
+</body>
+
+</html>

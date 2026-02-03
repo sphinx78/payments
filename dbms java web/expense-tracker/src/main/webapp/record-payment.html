@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Payment - ExpenseTracker</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">ExpenseTracker <span>| Friend Groups</span></div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html">Dashboard</a></li>
+                    <li><a href="create-group.html">Create Group</a></li>
+                    <li><a href="add-member.html">Add Member</a></li>
+                    <li><a href="transaction.html" class="active">Transactions</a></li>
+                    <li><a href="settlement.html">Settlements</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <main>
+            <div class="page-header">
+                <h1 class="page-title">Record Payment</h1>
+            </div>
+            <div id="alertBox" class="hidden"></div>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">New Payment</h3>
+                    </div>
+                    <form id="paymentForm" onsubmit="submitPayment(event)">
+                        <div class="form-group">
+                            <label>Select Group *</label>
+                            <select id="groupId" required onchange="loadGroupData()">
+                                <option value="">Choose...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Who is Paying *</label>
+                            <select id="fromUser" required>
+                                <option value="">Select...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Paying To *</label>
+                            <select id="toUser" required>
+                                <option value="">Select...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount (₹) *</label>
+                            <input type="number" id="amount" step="0.01" min="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Note (Optional)</label>
+                            <input type="text" id="note" placeholder="Payment note">
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success">Record Payment</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Pending Settlements</h3>
+                    </div>
+                    <div id="pendingSettlements">
+                        <p class="empty-state">Select a group</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let groupMembers = [];
+
+        document.addEventListener('DOMContentLoaded', loadGroups);
+
+        async function loadGroups() {
+            const response = await fetch(`${API_BASE}/group`);
+            const groups = await response.json();
+            const select = document.getElementById('groupId');
+            groups.forEach(g => select.innerHTML += `<option value="${g.groupId}">${g.name}</option>`);
+        }
+
+        async function loadGroupData() {
+            const groupId = document.getElementById('groupId').value;
+            if (!groupId) return;
+
+            const membersRes = await fetch(`${API_BASE}/group/${groupId}/members`);
+            groupMembers = await membersRes.json();
+
+            ['fromUser', 'toUser'].forEach(id => {
+                const sel = document.getElementById(id);
+                sel.innerHTML = '<option value="">Select...</option>';
+                groupMembers.forEach(m => sel.innerHTML += `<option value="${m.phoneNumber}">${m.name}</option>`);
+            });
+
+            const settleRes = await fetch(`${API_BASE}/settlement/summary?groupId=${groupId}`);
+            const settlements = await settleRes.json();
+            const container = document.getElementById('pendingSettlements');
+
+            if (settlements.length === 0) {
+                container.innerHTML = '<p class="empty-state">All settled!</p>';
+            } else {
+                container.innerHTML = settlements.map(s => `
+                    <div class="settlement-item" onclick="prefill('${s.fromUserId}','${s.toUserId}',${s.amount})" style="cursor:pointer">
+                        <span>${s.fromUserName} → ${s.toUserName}</span>
+                        <span class="settlement-amount">₹${s.amount}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function prefill(from, to, amount) {
+            document.getElementById('fromUser').value = from;
+            document.getElementById('toUser').value = to;
+            document.getElementById('amount').value = amount;
+        }
+
+        async function submitPayment(event) {
+            event.preventDefault();
+            const formData = new URLSearchParams({
+                fromUser: document.getElementById('fromUser').value,
+                toUser: document.getElementById('toUser').value,
+                amount: document.getElementById('amount').value,
+                note: document.getElementById('note').value
+            });
+
+            const response = await fetch(`${API_BASE}/payment`, { method: 'POST', body: formData });
+            const result = await response.json();
+
+            if (result.success) {
+                alert('Payment recorded!');
+                loadGroupData();
+                document.getElementById('paymentForm').reset();
+            } else {
+                alert('Error: ' + result.error);
+            }
+        }
+    </script>
+</body>
+
+</html>
